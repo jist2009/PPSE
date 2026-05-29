@@ -1,3 +1,15 @@
+hard pour task6 s=4 f=2 / s=4 f=3
+
+
+
+
+
+
+
+
+
+
+
 #!/bin/bash
 
 # Remplacez les 4 par le SNR que vous voulez tester
