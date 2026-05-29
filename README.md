@@ -32,3 +32,38 @@ for s in {8..1..-1}; do
 done
 
 echo "✅ Exploration terminée !"
+
+
+
+
+
+
+
+
+import csv
+import glob
+import os
+
+# Crée un dossier pour stocker les nouveaux fichiers
+output_dir = "donnees_extraites"
+os.makedirs(output_dir, exist_ok=True)
+
+# Liste tous les fichiers simX.csv
+fichiers = glob.glob("sim*.csv")
+
+for fichier in fichiers:
+    nom_base = os.path.basename(fichier)
+    nom_sortie = os.path.join(output_dir, f"clean_{nom_base}")
+    
+    with open(fichier, 'r') as f_in, open(nom_sortie, 'w', newline='') as f_out:
+        reader = csv.DictReader(f_in)
+        writer = csv.writer(f_out)
+        
+        # Écriture de l'en-tête
+        writer.writerow(["Eb/N0(dB)", "FER"])
+        
+        # Lecture et extraction
+        for row in reader:
+            writer.writerow([row["Eb/N0(dB)"],  row["FER"]])
+            
+    print(f"Fichier créé : {nom_sortie}")
