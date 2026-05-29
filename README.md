@@ -67,3 +67,121 @@ for fichier in fichiers:
             writer.writerow([row["Eb/N0(dB)"],  row["FER"]])
             
     print(f"Fichier créé : {nom_sortie}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import os
+import pandas as pd
+import glob
+
+# 1. Définir le chemin vers le dossier contenant tes 45 fichiers
+dossier_fichiers = "./" 
+
+# Trouver tous les fichiers CSV (modifie "*.txt" si tes fichiers sont des .txt)
+fichiers = glob.glob(os.path.join(dossier_fichiers, "*.csv"))
+
+liste_dataframes = []
+
+for fichier in fichiers:
+    # Récupérer le nom du fichier (ex: "sim_s5_f3.csv") pour identifier les paramètres
+    nom_fichier = os.path.basename(fichier)
+    
+    # Lire le fichier (ajuste 'sep' si les colonnes sont séparées par des espaces ou point-virgules)
+    df = pd.read_csv(fichier, sep=',') 
+    
+    # Ajouter une colonne avec le nom du fichier
+    df['Parametres_Source'] = nom_fichier
+    
+    liste_dataframes.append(df)
+
+# Combiner tous les fichiers en un seul grand tableau
+donnees_globales = pd.concat(liste_dataframes, ignore_index=True)
+
+# Sauvegarder le résultat dans un fichier unique
+fichier_sortie = "simulations_compilees.csv"
+donnees_globales.to_csv(fichier_sortie, index=False)
+
+print(f"Terminé ! {len(fichiers)} fichiers ont été regroupés dans '{fichier_sortie}'.")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import pandas as pd
+import numpy as np
+
+# 1. Charger le fichier global
+df = pd.read_csv('simulations_compilees.csv')
+# 1. Affiche les vrais noms pour voir le problème
+print("Colonnes détectées :", df.columns.tolist())
+
+# 2. Nettoie les espaces invisibles autour des noms
+df.columns = df.columns.str.strip()
+# 2. Tes points cibles (ici les 13 points de ton message précédent)
+cible = {
+    0.0: 1.0, 1.0: 0.8, 2.0: 0.8, 3.0: 0.5, 4.0: 0.3,
+    5.0: 0.18, 6.0: 0.07, 7.0: 0.02, 8.0: 0.006,
+    9.0: 0.001, 10.0: 0.00012, 11.0: 0.000008, 12.0: 0.00000025
+}
+
+resultats = []
+
+# 3. Calcul de l'écart pour chaque fichier de simulation
+for fichier, groupe in df.groupby('Parametres_Source'):
+    erreur = 0
+    n_points = 0
+    
+    for _, row in groupe.iterrows():
+        ebno = row['Eb/N0(dB)']
+        if ebno in cible:
+            # Différence entre les puissances de 10
+            erreur += (np.log10(row['FER'] + 1e-10) - np.log10(cible[ebno] + 1e-10))**2
+            n_points += 1
+            
+    if n_points > 0:
+        resultats.append({'Fichier': fichier, 'Score_Erreur': erreur / n_points})
+
+# 4. Trier et afficher le gagnant
+df_res = pd.DataFrame(resultats).sort_values(by='Score_Erreur')
+print("Top 3 des paramètres les plus proches (score le plus bas = le meilleur) :")
+print(df_res.head(3))
